@@ -1,0 +1,3 @@
+game:
+  resource: "@GameBundle/Controller/GameController.php"
+  type:     annotation
