@@ -76,8 +76,15 @@ jms_serializer:
             options: JSON_PRETTY_PRINT
 
 fos_rest:
+    serializer:
+        serialize_null: true
     routing_loader:
-        default_format: json
-    param_fetcher_listener: true
-    exception:
-        enabled: true
+        default_format: 'json'
+        include_format: true
+    view:
+        view_response_listener: 'force'
+    param_fetcher_listener: 'force'
+    body_listener: true
+    allowed_methods_listener: true
+    access_denied_listener:
+        json: true
