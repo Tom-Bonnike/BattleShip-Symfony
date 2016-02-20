@@ -5,5 +5,15 @@
 {% endblock %}
 
 {% block body %}
-    {{ text }}
+   
+    <h1>Room List</h1>
+
+    {% for room in rooms %}
+        <a href="{{ path('room', {'id': room.id }) }}">Room {{ room.id }}</a>
+    {% endfor %}
+
+    <h2> Create a room </h2>
+    {{ form_start(form) }}
+        <input type="submit">
+    {{ form_end(form) }}
 {% endblock %}
