@@ -4,6 +4,9 @@ namespace GameBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
+use JMS\Serializer\Annotation\ExclusionPolicy;
+use JMS\Serializer\Annotation\Expose;
+
 use GameBundle\Entity\Player;
 use GameBundle\Entity\PlayerRoom;
 
@@ -12,6 +15,8 @@ use GameBundle\Entity\PlayerRoom;
  *
  * @ORM\Table(name="room")
  * @ORM\Entity
+ *
+ * @ExclusionPolicy("all")
  */
 class Room
 {
@@ -42,6 +47,8 @@ class Room
      * @var string
      *
      * @ORM\Column(name="winner", type="string", length=255, nullable=false)
+     *
+     * @Expose
      */
     private $winner;
 
@@ -49,6 +56,7 @@ class Room
      * @var string
      *
      * @ORM\Column(name="turn", type="string", length=255, nullable=false)
+     *
      */
     private $turn;
 
@@ -56,6 +64,8 @@ class Room
      * @var boolean
      *
      * @ORM\Column(name="started", type="boolean", nullable=false)
+     *
+     * @Expose
      */
     private $started;
 
@@ -63,6 +73,8 @@ class Room
      * @var boolean
      *
      * @ORM\Column(name="done", type="boolean", nullable=false)
+     *
+     * @Expose
      */
     private $done;
 
@@ -70,6 +82,8 @@ class Room
      * @var \DateTime
      *
      * @ORM\Column(name="creation_date", type="datetime", nullable=false)
+     *
+     * @Expose
      */
     private $creationDate;
 
@@ -262,12 +276,16 @@ class Room
     /**
      * @ORM\OneToOne(targetEntity="PlayerRoom", cascade={"persist"})
      * @ORM\JoinColumn(name="player_room_1_id", referencedColumnName="id")
+     *
+     * @Expose
      */
     private $player1;
 
     /**
      * @ORM\OneToOne(targetEntity="PlayerRoom", cascade={"persist"})
      * @ORM\JoinColumn(name="player_room_2_id", referencedColumnName="id")
+     *
+     * @Expose
      */
     private $player2;
 

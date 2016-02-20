@@ -13,11 +13,11 @@ use FOS\RestBundle\Request\ParamFetcher;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-use GameBundle\Entity\Room;
-use GameBundle\Repository\RoomRepository;
-
 use GameBundle\Entity\Player;
 use GameBundle\Repository\PlayerRepository;
+
+use GameBundle\Entity\Room;
+use GameBundle\Repository\RoomRepository;
 
 use GameBundle\Entity\PlayerRoom;
 
@@ -63,14 +63,17 @@ class GameController extends FOSRestController
 
         $player = $this->validateUserToken($userToken);
 
+        // Create PlayerRoom entity
         $playerRoom = new PlayerRoom();
         $playerRoom->setPlayer($player);
 
+        // Create Room entity
         $room = new Room();
         $room
-            ->setPlayer1($playerRoom)
+            ->setPlayer1($playerRoom) // set the playerRoom entity to the room's player1 property
             ->setTurn($player->getToken());
 
+        // Persist the room entity (playerRoom cascade persist)
         $em->persist($room);
         $em->flush();
 
@@ -88,6 +91,15 @@ class GameController extends FOSRestController
     }
 
     /**
+     * @Get("/room/{id}/winner")
+    **/
+    public function getRoomWinnerAction(Room $room)
+    {
+        $view = $this->view($room->getWinner(), 200);
+        return $this->handleView($view);
+    }
+
+    /**
      * @Put("/room/{id}/join")
     **/
     public function joinRoomAction(Request $request, Room $room)
@@ -97,32 +109,40 @@ class GameController extends FOSRestController
 
         $player = $this->validateUserToken($userToken);
 
-        if (!$room->isFull()){
+        if (!$room->getStarted()){
+            if (!$room->isFull()){
 
-            if (!$room->hasPlayer($player)){
-                $playerRoom = new PlayerRoom();
-                $playerRoom->setPlayer($player);
+                if (!$room->hasPlayer($player)){
+                    // Create a new PlayerRoom entity
+                    $playerRoom = new PlayerRoom();
+                    $playerRoom->setPlayer($player);
 
-                $room
-                    ->setPlayer2($playerRoom)
-                    ->setStarted(true);
+                    $room
+                        ->setPlayer2($playerRoom) // Set the PlayerRoom entity to the room's player2 property
+                        ->setStarted(true); // Start the game
 
-                $em->persist($room);
-                $em->flush();
+                    $em->persist($room);
+                    $em->flush();
 
-                $view = $this->view($room, 200);
+                    $view = $this->view($room, 200);
+                }
+
+
+                else {
+                    throw new HttpException(401, 'Sorry, but you\'ve already joined this room!');
+                }
+
             }
-
 
             else {
-                throw new HttpException(401, 'Sorry, but you\'ve already joined this room!');
+                throw new HttpException(401, 'Sorry, but the room is full!');
             }
-
         }
 
         else {
-            throw new HttpException(401, 'Sorry, but the room is full!');
+            throw new HttpException(401, 'Sorry, but the game has already started!');
         }
+
 
         return $this->handleView($view);
     }
@@ -150,14 +170,19 @@ class GameController extends FOSRestController
     **/
     public function createPlayerAction(ParamFetcher $paramFetcher)
     {
+        $em = $this->getDoctrine()->getManager();
+
+        // Create a new Player Entity
         $player = new Player();
+
+        // Generate random token that will be passed in requests' headers to recognize a specific user
         $randomToken = bin2hex(openssl_random_pseudo_bytes(10));
 
         $player
             ->setName($paramFetcher->get('name'))
             ->setToken($randomToken);
 
-        $em = $this->getDoctrine()->getManager();
+        // Persist the player
         $em->persist($player);
         $em->flush();
 

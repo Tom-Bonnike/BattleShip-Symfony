@@ -4,11 +4,16 @@ namespace GameBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
+use JMS\Serializer\Annotation\ExclusionPolicy;
+use JMS\Serializer\Annotation\Expose;
+
 /**
  * Player
  *
  * @ORM\Table(name="player")
  * @ORM\Entity
+ *
+ * @ExclusionPolicy("all")
  */
 class Player
 {
@@ -25,6 +30,8 @@ class Player
      * @var string
      *
      * @ORM\Column(name="name", type="string", length=255, nullable=false)
+     *
+     * @Expose
      */
     private $name;
 
@@ -32,6 +39,8 @@ class Player
      * @var string
      *
      * @ORM\Column(name="token", type="string", length=255, nullable=false)
+     *
+     * @Expose
      */
     private $token;
 
@@ -39,6 +48,8 @@ class Player
      * @var \DateTime
      *
      * @ORM\Column(name="creation_date", type="datetime", nullable=false)
+     *
+     * @Expose
      */
     private $creationDate;
 

@@ -4,6 +4,9 @@ namespace GameBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
+use JMS\Serializer\Annotation\ExclusionPolicy;
+use JMS\Serializer\Annotation\Expose;
+
 use GameBundle\Entity\Player;
 
 /**
@@ -11,6 +14,8 @@ use GameBundle\Entity\Player;
  *
  * @ORM\Table(name="player_room")
  * @ORM\Entity
+ *
+ * @ExclusionPolicy("all")
  */
 class PlayerRoom
 {
@@ -34,6 +39,8 @@ class PlayerRoom
      * @var array
      *
      * @ORM\Column(name="strikes", type="json_array", nullable=false)
+     *
+     * @Expose
      */
     private $strikes;
 
@@ -41,6 +48,8 @@ class PlayerRoom
      * @var array
      *
      * @ORM\Column(name="ships", type="json_array", nullable=false)
+     *
+     * @Expose
      */
     private $ships;
 
@@ -135,6 +144,8 @@ class PlayerRoom
     /**
      * @ORM\OneToOne(targetEntity="Player")
      * @ORM\JoinColumn(name="player_id", referencedColumnName="id")
+     *
+     * @Expose
      */
     private $player;
 
