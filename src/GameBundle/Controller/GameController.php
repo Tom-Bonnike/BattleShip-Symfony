@@ -193,10 +193,26 @@ class GameController extends FOSRestController
     /**
      * @Get("/player/{id}")
     **/
-    public function showPlayerAction(Player $player)
+    public function showPlayerAction($id, Player $player = null)
     {
-        $view = $this->view($player, 200);
-        return $this->handleView($view);
+        if ($player){
+            $view = $this->view($player, 200);
+            return $this->handleView($view);
+        }
+
+        else {
+            $er = $this->getDoctrine()->getRepository('GameBundle:Player');
+            $player = $er->findOneByName($id);
+
+            if ($player){
+                $view = $this->view($player, 200);
+                return $this->handleView($view);
+            }
+
+            else {
+                throw new HttpException(404, 'Sorry, but this user doesn\'t exist.');
+            }
+        }
     }
 
     private function validateUserToken($userToken)

@@ -56,7 +56,7 @@ class PlayerRoom
     public function __construct()
     {
         $this->strikes = [];
-        $this->ships   = [];
+        $this->ships   = $this->setShipsRandom();
     }
 
     /**
@@ -139,6 +139,145 @@ class PlayerRoom
     public function getShips()
     {
         return $this->ships;
+    }
+
+    /**
+     * Set ships at random position
+     *
+     * @return array
+     */
+    private function setShipsRandom()
+    {
+        $ships = [
+            [
+                'type' => 'Aircraft Carrier',
+                'size' => 5
+            ],
+            [
+                'type' => 'Battleship',
+                'size' => 4
+            ],
+            [
+                'type' => 'Submarine',
+                'size' => 3
+            ],
+            [
+                'type' => 'Cruiser',
+                'size' => 3
+            ],
+            [
+                'type' => 'Patrol boat',
+                'size' => 2
+            ]
+        ];
+
+        // Generate a normal positions array, 0 when nothing, 1 when there's a boat
+        $shipsPositionsArray = [];
+
+        for ($i = 0; $i <= 10; $i++){
+            for ($j = 0; $j <= 10; $j++){
+                $shipsPositionsArray[$i][] = 0;
+            }
+        }
+
+        $shipsPositions = [];
+
+        foreach ($ships as $ship){
+            // For each ship, set it at a random position
+            do {
+                // Choose a random position
+                $randomPositions = [mt_rand(0,9), mt_rand(0,9)];
+
+                // Randomly select vertical or horizontal axis
+                $axis = ['x', 'y'][mt_rand(0, 1)];
+
+                // Randomly select positive or negative on the selected axis
+                $direction = ['+', '-'][mt_rand(0, 1)];
+
+                $newPositions = [];
+
+                for ($i = 0; $i < $ship['size']; $i++){
+                    if ($axis == 'x'){
+                        if ($direction == '+'){
+                            $xTemp = $randomPositions[0]++;
+                        }
+
+                        else {
+                            $xTemp = $randomPositions[0]--;
+                        }
+
+                        $yTemp = $randomPositions[1];
+                    }
+
+                    else {
+                        $xTemp = $randomPositions[0];
+
+                        if ($direction == '+'){
+                            $yTemp = $randomPositions[1]++;
+                        }
+
+                        else {
+                            $yTemp = $randomPositions[1]--;
+                        }
+                    }
+
+                    $newPositions[] = [$xTemp, $yTemp];
+                }
+
+                $positionsAreValid = $this->checkNewPositions($newPositions, $shipsPositionsArray);
+            } while ($positionsAreValid === false);
+
+            // Update the normal positions array for the other ships
+            foreach ($newPositions as $newPosition){
+                $shipsPositionsArray[$newPosition[1]][$newPosition[0]] = 1;
+            }
+
+            // Add the positioned ship to a pretty positions array with Battleship-like positions (A1, A2...)
+            $shipsPositions[] = [
+                'type'      => $ship['type'],
+                'positions' => $this->getPrettyPositions($newPositions)
+            ];
+        }
+
+        // Array with all ship's pretty positions array
+        return $shipsPositions;
+    }
+
+    /**
+     * Get a pretty ship's position array from multiple [x, y] style array
+     *
+     * @return array
+     */
+    private function getPrettyPositions($positions)
+    {
+        $prettyPositions = [];
+        $alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+        foreach($positions as $position){
+            $letterPosition = $alphabet[$position[1]];
+
+            $prettyPositions[] = $letterPosition . ($position[0] + 1);
+        }
+
+        return $prettyPositions;
+    }
+
+    /**
+     * Check if new ship random positions are valid
+     *
+     * @return boolean
+     */
+    private function checkNewPositions($newPositions, $positions)
+    {
+        foreach($newPositions as $newPosition){
+            if(($newPosition[0] > 9 || $newPosition[0] < 0)    ||
+               ($newPosition[1] > 9 || $newPosition[1] < 0)    ||
+               $positions[$newPosition[1]][$newPosition[0]] == 1){
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
