@@ -42,7 +42,6 @@ class Player
      *
      * @ORM\Column(name="token", type="string", length=255, nullable=false)
      *
-     * @Expose
      */
     private $token;
 

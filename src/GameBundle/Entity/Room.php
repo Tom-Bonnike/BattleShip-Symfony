@@ -26,6 +26,8 @@ class Room
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
+     *
+     * @Expose
      */
     private $id;
 
@@ -57,6 +59,7 @@ class Room
      *
      * @ORM\Column(name="turn", type="string", length=255, nullable=false)
      *
+     * @Expose
      */
     private $turn;
 
@@ -356,6 +359,78 @@ class Room
 
         else {
             return false;
+        }
+    }
+
+    public function strike($userToken, $coordinates)
+    {
+        $player1 = $this->getPlayer1();
+        $player2 = $this->getPlayer2();
+
+        if ($player1->getPlayer()->getToken() == $userToken){
+            $player      = $player1;
+            $enemyPlayer = $player2;
+        }
+
+        else {
+            $player      = $player2;
+            $enemyPlayer = $player1;
+        }
+
+        $striked = $player->checkStriked($coordinates);
+
+        if (!$striked){
+            $hit = $enemyPlayer->checkHit($coordinates);
+
+            $player->updateStrikes($coordinates, $hit);
+
+            if (!$hit){
+                return [
+                    'message'     => 'You missed! It\'s their turn now.',
+                    'coordinates' => $coordinates,
+                    'strikes'     => $player->getStrikes()
+                ];
+
+                $this->setTurn($enemyPlayer->getPlayer()->getToken());
+            }
+
+            else {
+                /*
+                    Check fin de partie / check bateau entier détruit + retourne le type de ce bateau
+                */
+
+                return [
+                    'message'     => 'It\'s a hit! You can play again.',
+                    'coordinates' => $coordinates,
+                    'strikes'     => $player->getStrikes()
+                ];
+            }
+        }
+
+        else {
+            return [
+                'message'     => 'You have already striked these coordinates! Try again.',
+                'coordinates' => $coordinates,
+                'strikes'     => $player->getStrikes()
+            ];
+        }
+    }
+
+    public function getOwnShips($userToken)
+    {
+        $player1 = $this->getPlayer1();
+        $player2 = $this->getPlayer2();
+
+        if ($player1->getPlayer()->getToken() == $userToken){
+            return $player1->getShips();
+        }
+
+        else if ($player2->getPlayer()->getToken() == $userToken){
+            return $player2->getShips();
+        }
+
+        else {
+            throw new HttpException(403, 'Sorry, but you can\'t see other players\' ships positions!');
         }
     }
 }

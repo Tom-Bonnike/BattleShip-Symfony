@@ -49,7 +49,6 @@ class PlayerRoom
      *
      * @ORM\Column(name="ships", type="json_array", nullable=false)
      *
-     * @Expose
      */
     private $ships;
 
@@ -139,6 +138,38 @@ class PlayerRoom
     public function getShips()
     {
         return $this->ships;
+    }
+
+    /**
+     * @ORM\OneToOne(targetEntity="Player")
+     * @ORM\JoinColumn(name="player_id", referencedColumnName="id")
+     *
+     * @Expose
+     */
+    private $player;
+
+    /**
+     * Set player
+     *
+     * @param \GameBundle\Entity\Player $player
+     *
+     * @return PlayerRoom
+     */
+    public function setPlayer(Player $player = null)
+    {
+        $this->player = $player;
+
+        return $this;
+    }
+
+    /**
+     * Get player
+     *
+     * @return \GameBundle\Entity\Player
+     */
+    public function getPlayer()
+    {
+        return $this->player;
     }
 
     /**
@@ -280,35 +311,45 @@ class PlayerRoom
         return true;
     }
 
-    /**
-     * @ORM\OneToOne(targetEntity="Player")
-     * @ORM\JoinColumn(name="player_id", referencedColumnName="id")
-     *
-     * @Expose
-     */
-    private $player;
-
-    /**
-     * Set player
-     *
-     * @param \GameBundle\Entity\Player $player
-     *
-     * @return PlayerRoom
-     */
-    public function setPlayer(Player $player = null)
+    public function checkHit($coordinates)
     {
-        $this->player = $player;
+        $ships = $this->getShips();
+        $hit = false;
 
-        return $this;
+        foreach ($ships as $ship){
+            if (in_array($coordinates, $ship['positions'])){
+                $hit = true;
+                break;
+            }
+        }
+
+        return $hit;
     }
 
-    /**
-     * Get player
-     *
-     * @return \GameBundle\Entity\Player
-     */
-    public function getPlayer()
+    public function checkStriked($coordinates)
     {
-        return $this->player;
+        $strikes = $this->getStrikes();
+        $striked = false;
+
+        foreach ($strikes as $strike){
+            if ($strike['coordinates'] == $coordinates){
+                $striked = true;
+                break;
+            }
+        }
+
+        return $striked;
+    }
+
+    public function updateStrikes($coordinates, $hit)
+    {
+        $strikes = $this->getStrikes();
+
+        $strikes[] = [
+            'hit'         => $hit,
+            'coordinates' => $coordinates
+        ];
+
+        $this->setStrikes($strikes);
     }
 }

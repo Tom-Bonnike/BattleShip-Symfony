@@ -10,6 +10,7 @@ use FOS\RestBundle\Controller\Annotations\RequestParam;
 use FOS\RestBundle\Controller\FOSRestController;
 use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Request\ParamFetcher;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -20,6 +21,13 @@ use GameBundle\Entity\Room;
 use GameBundle\Repository\RoomRepository;
 
 use GameBundle\Entity\PlayerRoom;
+
+/*
+    Todo:
+        - pretty print grille de jeu
+        - tests unitaires
+        - doc & commentaires & README
+*/
 
 class GameController extends FOSRestController
 {
@@ -59,8 +67,8 @@ class GameController extends FOSRestController
     public function createRoomAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
-        $userToken = $request->headers->get('X-USER-TOKEN');
 
+        $userToken = $request->headers->get('X-USER-TOKEN');
         $player = $this->validateUserToken($userToken);
 
         // Create PlayerRoom entity
@@ -84,67 +92,129 @@ class GameController extends FOSRestController
     /**
      * @Get("/room/{id}")
     **/
-    public function getRoomAction(Room $room)
+    public function getRoomAction(Room $room = null)
     {
-        $view = $this->view($room, 200);
-        return $this->handleView($view);
-    }
+        if ($room){
+            $view = $this->view($room, 200);
+            return $this->handleView($view);
+        }
 
-    /**
-     * @Get("/room/{id}/winner")
-    **/
-    public function getRoomWinnerAction(Room $room)
-    {
-        $view = $this->view($room->getWinner(), 200);
-        return $this->handleView($view);
+        else {
+            throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
+        }
     }
 
     /**
      * @Put("/room/{id}/join")
     **/
-    public function joinRoomAction(Request $request, Room $room)
+    public function joinRoomAction(Request $request, Room $room = null)
     {
-        $em = $this->getDoctrine()->getManager();
-        $userToken = $request->headers->get('X-USER-TOKEN');
+        if ($room){
+            $em = $this->getDoctrine()->getManager();
 
-        $player = $this->validateUserToken($userToken);
+            $userToken = $request->headers->get('X-USER-TOKEN');
+            $player = $this->validateUserToken($userToken);
 
-        if (!$room->getStarted()){
-            if (!$room->isFull()){
+            if (!$room->getStarted()){
+                if (!$room->isFull()){
 
-                if (!$room->hasPlayer($player)){
-                    // Create a new PlayerRoom entity
-                    $playerRoom = new PlayerRoom();
-                    $playerRoom->setPlayer($player);
+                    if (!$room->hasPlayer($player)){
+                        // Create a new PlayerRoom entity
+                        $playerRoom = new PlayerRoom();
+                        $playerRoom->setPlayer($player);
 
-                    $room
-                        ->setPlayer2($playerRoom) // Set the PlayerRoom entity to the room's player2 property
-                        ->setStarted(true); // Start the game
+                        $room
+                            ->setPlayer2($playerRoom) // Set the PlayerRoom entity to the room's player2 property
+                            ->setStarted(true); // Start the game
 
-                    $em->persist($room);
-                    $em->flush();
+                        $em->persist($room);
+                        $em->flush();
 
-                    $view = $this->view($room, 200);
+                        $view = $this->view($room, 200);
+                    }
+
+
+                    else {
+                        throw new HttpException(403, 'Sorry, but you\'ve already joined this room!');
+                    }
+
                 }
-
 
                 else {
-                    throw new HttpException(401, 'Sorry, but you\'ve already joined this room!');
+                    throw new HttpException(403, 'Sorry, but the room is full!');
                 }
-
             }
 
             else {
-                throw new HttpException(401, 'Sorry, but the room is full!');
+                throw new HttpException(403, 'Sorry, but the game has already started!');
+            }
+
+            return $this->handleView($view);
+        }
+
+        else {
+            throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
+        }
+    }
+
+    /**
+     * @Get("/room/{id}/ships")
+    **/
+    public function getOwnShipsAction(Request $request, Room $room = null)
+    {
+        if ($room){
+            $userToken = $request->headers->get('X-USER-TOKEN');
+            $player = $this->validateUserToken($userToken);
+
+            $ships = $room->getOwnShips($userToken);
+
+            $view = $this->view($ships, 200);
+            return $this->handleView($view);
+        }
+
+        else {
+            throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
+        }
+    }
+
+    /**
+     * @RequestParam(name="coordinates", requirements=@Assert\Regex("/^([a-jA-J]([1-9]|10))$/"), allowBlank=false, description="Strike coordinates", nullable=false)
+     * @Put("/room/{id}/strike")
+    **/
+    public function roomStrikeAction(ParamFetcher $paramFetcher, Request $request, Room $room = null)
+    {
+        if ($room){
+            $userToken = $request->headers->get('X-USER-TOKEN');
+            $player = $this->validateUserToken($userToken);
+
+            if (!$room->getDone()){
+                if ($room->getStarted()){
+                    if ($room->getTurn() == $userToken){
+                        $coordinates = $paramFetcher->get('coordinates');
+                        $strikeResponse = $room->strike($userToken, $coordinates);
+
+                        $view = $this->view($strikeResponse, 200);
+                        return $this->handleView($view);
+                    }
+
+                    else {
+                        throw new HttpException(403, 'Sorry, but it\'s not your turn!');
+                    }
+                }
+
+                else {
+                    throw new HttpException(403, 'Sorry, but the game hasn\'t started yet!');
+                }
+            }
+
+            else {
+                throw new HttpException(403, 'Sorry, but the game has already ended.');
             }
         }
 
         else {
-            throw new HttpException(401, 'Sorry, but the game has already started!');
+            throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
         }
-
-
-        return $this->handleView($view);
     }
 
     /****                ****/
@@ -165,9 +235,9 @@ class GameController extends FOSRestController
     }
 
     /**
-     * @RequestParam(name="name", requirements=".+", allowBlank=false, description="Player name")
+     * @RequestParam(name="name", requirements=".+", allowBlank=false, description="Player name", nullable=false)
      * @Post("/player")
-    **/
+    */
     public function createPlayerAction(ParamFetcher $paramFetcher)
     {
         $em = $this->getDoctrine()->getManager();
@@ -186,13 +256,18 @@ class GameController extends FOSRestController
         $em->persist($player);
         $em->flush();
 
-        $view = $this->view($player, 200);
+        $response = [
+            'player' => $player,
+            'token'  => $player->getToken()
+        ];
+
+        $view = $this->view($response, 200);
         return $this->handleView($view);
     }
 
     /**
      * @Get("/player/{id}")
-    **/
+    */
     public function showPlayerAction($id, Player $player = null)
     {
         if ($player){
@@ -215,17 +290,28 @@ class GameController extends FOSRestController
         }
     }
 
+    /**
+     * Validates the user token
+     *
+     * @return Player
+    **/
     private function validateUserToken($userToken)
     {
-        $er = $this->getDoctrine()->getRepository('GameBundle:Player');
-        $player = $er->findOneByToken($userToken);
-
-        if ($player){
-            return $player;
+        if (!$userToken){
+            throw new HttpException(401, 'Please authenticate (X-USER-TOKEN header parameter) with the token that was given to you at your account\'s creation.');
         }
 
         else {
-            throw new HttpException(401, 'Sorry, but this user token isn\'t linked to any player.');
+            $er = $this->getDoctrine()->getRepository('GameBundle:Player');
+            $player = $er->findOneByToken($userToken);
+
+            if ($player){
+                return $player;
+            }
+
+            else {
+                throw new HttpException(401, 'Sorry, but this user token isn\'t linked to any player.');
+            }
         }
     }
 }
