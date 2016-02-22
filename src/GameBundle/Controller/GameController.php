@@ -2,17 +2,16 @@
 
 namespace GameBundle\Controller;
 
+use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Put;
 use FOS\RestBundle\Controller\Annotations\RequestParam;
-
-use FOS\RestBundle\Controller\FOSRestController;
-use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Request\ParamFetcher;
-use Symfony\Component\Validator\Constraints as Assert;
 
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use GameBundle\Entity\Player;
 use GameBundle\Repository\PlayerRepository;
@@ -24,8 +23,8 @@ use GameBundle\Entity\PlayerRoom;
 
 /*
     Todo:
-        - tests unitaires
         - doc & commentaires & README & postman collection
+        - préparer bdd?
 */
 
 class GameController extends FOSRestController
@@ -111,13 +110,17 @@ class GameController extends FOSRestController
         $em->flush();
 
         $view = $this->view($room, 201);
+
+        $url = $this->generateUrl('show_room', array('id' => $room->getId()));
+        $view->setLocation($url);
+
         return $this->handleView($view);
     }
 
     /**
      * @Get("/room/{id}")
     **/
-    public function getRoomAction(Room $room = null)
+    public function showRoomAction(Room $room = null)
     {
         if ($room){
             $view = $this->view($room, 200);
@@ -293,29 +296,42 @@ class GameController extends FOSRestController
     */
     public function createPlayerAction(ParamFetcher $paramFetcher)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em   = $this->getDoctrine()->getManager();
+        $name = $paramFetcher->get('name');
 
-        // Create a new Player Entity
-        $player = new Player();
+        if ($em->getRepository('GameBundle:Player')->findOneByName($name)){
+            throw new HttpException(400, 'Sorry, but this name is already taken. Pick another one.');
+        }
 
-        // Generate random token that will be passed in requests' headers to recognize a specific user
-        $randomToken = bin2hex(openssl_random_pseudo_bytes(10));
+        else {
+            // Create a new Player Entity
+            $player = new Player();
 
-        $player
-            ->setName($paramFetcher->get('name'))
-            ->setToken($randomToken);
+            // Generate random token that will be passed in requests' headers to recognize a specific user
+            $randomToken = bin2hex(openssl_random_pseudo_bytes(10));
 
-        // Persist the player
-        $em->persist($player);
-        $em->flush();
+            // Set name and Token
+            $player
+                ->setName($name)
+                ->setToken($randomToken);
 
-        $response = [
-            'player' => $player,
-            'token'  => $player->getToken()
-        ];
+            // Persist the player
+            $em->persist($player);
+            $em->flush();
 
-        $view = $this->view($response, 201);
-        return $this->handleView($view);
+            $response = [
+                'player'  => $player,
+                'token'   => $player->getToken(), // Send back the token, that won't be displayed again.
+                'message' => 'Keep this token secret! You won\'t be able to retrieve it and you need it for some API calls.'
+            ];
+
+            $view = $this->view($response, 201);
+
+            $url = $this->generateUrl('show_player', array('id' => $player->getId()));
+            $view->setLocation($url);
+
+            return $this->handleView($view);
+        }
     }
 
     /**

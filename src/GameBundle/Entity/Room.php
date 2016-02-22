@@ -9,6 +9,7 @@ use JMS\Serializer\Annotation\Expose;
 
 use GameBundle\Entity\Player;
 use GameBundle\Entity\PlayerRoom;
+use GameBundle\Repository\RoomRepository;
 
 /**
  * Room
