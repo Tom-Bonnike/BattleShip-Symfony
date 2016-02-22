@@ -58,8 +58,6 @@ class Room
      * @var string
      *
      * @ORM\Column(name="turn", type="string", length=255, nullable=false)
-     *
-     * @Expose
      */
     private $turn;
 
@@ -353,8 +351,21 @@ class Room
 
     public function hasPlayer(Player $player)
     {
-        if ($this->getPlayer1()->getPlayer() === $player || $this->getPlayer2()->getPlayer() === $player){
+        $player1 = $this->getPlayer1();
+        $player2 = $this->getPlayer2();
+
+        if ($player1->getPlayer() === $player){
             return true;
+        }
+
+        else if ($player2) {
+            if ($player2->getPlayer() === $player){
+                return true;
+            }
+
+            else {
+                return false;
+            }
         }
 
         else {
@@ -385,25 +396,47 @@ class Room
             $player->updateStrikes($coordinates, $hit);
 
             if (!$hit){
+                $this->setTurn($enemyPlayer->getPlayer()->getToken());
+
                 return [
                     'message'     => 'You missed! It\'s their turn now.',
                     'coordinates' => $coordinates,
                     'strikes'     => $player->getStrikes()
                 ];
-
-                $this->setTurn($enemyPlayer->getPlayer()->getToken());
             }
 
             else {
-                /*
-                    Check fin de partie / check bateau entier détruit + retourne le type de ce bateau
-                */
+                $win = $player->checkWin();
 
-                return [
-                    'message'     => 'It\'s a hit! You can play again.',
-                    'coordinates' => $coordinates,
-                    'strikes'     => $player->getStrikes()
-                ];
+                if ($win){
+                    $this->setWinner($player->getPlayer()->getName());
+                    $this->setDone(true);
+
+                    return [
+                        'message'     => 'It\'s a hit! Congratulations, you\'ve destroyed their whole fleet! You win!',
+                        'coordinates' => $coordinates,
+                        'strikes'     => $player->getStrikes()
+                    ];
+                }
+
+                else {
+                    $boatDestroyed = $enemyPlayer->checkBoatDestroyed($player->getStrikes(), $coordinates);
+                    $message = '';
+
+                    if ($boatDestroyed){
+                        $message = 'It\'s a hit! You destroyed their '. $boatDestroyed .'! You can play again.';
+                    }
+
+                    else {
+                        $message = 'It\'s a hit! You can play again.';
+                    }
+
+                    return [
+                        'message'     => $message,
+                        'coordinates' => $coordinates,
+                        'strikes'     => $player->getStrikes()
+                    ];
+                }
             }
         }
 

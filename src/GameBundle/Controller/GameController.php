@@ -24,6 +24,7 @@ use GameBundle\Entity\PlayerRoom;
 
 /*
     Todo:
+        - error exception > only show custom messages and code
         - pretty print grille de jeu
         - tests unitaires
         - doc & commentaires & README
@@ -190,8 +191,14 @@ class GameController extends FOSRestController
             if (!$room->getDone()){
                 if ($room->getStarted()){
                     if ($room->getTurn() == $userToken){
-                        $coordinates = $paramFetcher->get('coordinates');
+                        $em = $this->getDoctrine()->getManager();
+
+                        $coordinates = strtoupper($paramFetcher->get('coordinates'));
                         $strikeResponse = $room->strike($userToken, $coordinates);
+
+                        // Persist the room and strikes
+                        $em->persist($room);
+                        $em->flush();
 
                         $view = $this->view($strikeResponse, 200);
                         return $this->handleView($view);

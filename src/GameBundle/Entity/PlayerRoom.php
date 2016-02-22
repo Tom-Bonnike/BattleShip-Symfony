@@ -19,6 +19,28 @@ use GameBundle\Entity\Player;
  */
 class PlayerRoom
 {
+    const SHIPS = [
+        [
+            'type' => 'Aircraft Carrier',
+            'size' => 5
+        ],
+        [
+            'type' => 'Battleship',
+            'size' => 4
+        ],
+        [
+            'type' => 'Submarine',
+            'size' => 3
+        ],
+        [
+            'type' => 'Cruiser',
+            'size' => 3
+        ],
+        [
+            'type' => 'Patrol boat',
+            'size' => 2
+        ]
+    ];
     /**
      * @var integer
      *
@@ -179,28 +201,7 @@ class PlayerRoom
      */
     private function setShipsRandom()
     {
-        $ships = [
-            [
-                'type' => 'Aircraft Carrier',
-                'size' => 5
-            ],
-            [
-                'type' => 'Battleship',
-                'size' => 4
-            ],
-            [
-                'type' => 'Submarine',
-                'size' => 3
-            ],
-            [
-                'type' => 'Cruiser',
-                'size' => 3
-            ],
-            [
-                'type' => 'Patrol boat',
-                'size' => 2
-            ]
-        ];
+        $ships = self::SHIPS;
 
         // Generate a normal positions array, 0 when nothing, 1 when there's a boat
         $shipsPositionsArray = [];
@@ -351,5 +352,50 @@ class PlayerRoom
         ];
 
         $this->setStrikes($strikes);
+    }
+
+    public function checkWin()
+    {
+        $hitsNeeded = 0;
+        $ships      = self::SHIPS;
+
+        foreach ($ships as $ship){
+            $hitsNeeded = $hitsNeeded + $ship['size'];
+        }
+
+        $hits = array_filter($this->getStrikes(), function($strike){
+            return $strike['hit'];
+        });
+
+        $hitsCount = count($hits);
+
+        return $hitsNeeded == $hitsCount;
+    }
+
+    public function checkBoatDestroyed($enemyStrikes, $coordinates)
+    {
+        $boat = array_values(array_filter($this->getShips(), function($ship) use ($coordinates){
+            return in_array($coordinates, $ship['positions']);
+        }))[0];
+
+        $strikes = array_map(function($strike){
+            return $strike['coordinates'];
+        }, $enemyStrikes);
+
+        $destroyed = true;
+
+        foreach ($boat['positions'] as $position){
+            if (!in_array($position, $strikes)){
+                $destroyed = false;
+            }
+        }
+
+        if ($destroyed){
+            return $boat['type'];
+        }
+
+        else {
+            return false;
+        }
     }
 }
