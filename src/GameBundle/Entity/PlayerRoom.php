@@ -13,7 +13,7 @@ use GameBundle\Entity\Player;
  * PlayerRoom
  *
  * @ORM\Table(name="player_room")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="GameBundle\Repository\PlayerRoomRepository")
  *
  * @ExclusionPolicy("all")
  */

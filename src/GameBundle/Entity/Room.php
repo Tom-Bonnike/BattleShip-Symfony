@@ -14,7 +14,7 @@ use GameBundle\Entity\PlayerRoom;
  * Room
  *
  * @ORM\Table(name="room")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="GameBundle\Repository\RoomRepository")
  *
  * @ExclusionPolicy("all")
  */
@@ -398,11 +398,7 @@ class Room
             if (!$hit){
                 $this->setTurn($enemyPlayer->getPlayer()->getToken());
 
-                return [
-                    'message'     => 'You missed! It\'s their turn now.',
-                    'coordinates' => $coordinates,
-                    'strikes'     => $player->getStrikes()
-                ];
+                $message = 'You missed! It\'s their turn now.';
             }
 
             else {
@@ -411,17 +407,13 @@ class Room
                 if ($win){
                     $this->setWinner($player->getPlayer()->getName());
                     $this->setDone(true);
+                    $player->getPlayer()->setWins($player->getPlayer()->getWins() + 1);
 
-                    return [
-                        'message'     => 'It\'s a hit! Congratulations, you\'ve destroyed their whole fleet! You win!',
-                        'coordinates' => $coordinates,
-                        'strikes'     => $player->getStrikes()
-                    ];
+                    $message = 'It\'s a hit! Congratulations, you\'ve destroyed their whole fleet! You win!';
                 }
 
                 else {
                     $boatDestroyed = $enemyPlayer->checkBoatDestroyed($player->getStrikes(), $coordinates);
-                    $message = '';
 
                     if ($boatDestroyed){
                         $message = 'It\'s a hit! You destroyed their '. $boatDestroyed .'! You can play again.';
@@ -430,23 +422,19 @@ class Room
                     else {
                         $message = 'It\'s a hit! You can play again.';
                     }
-
-                    return [
-                        'message'     => $message,
-                        'coordinates' => $coordinates,
-                        'strikes'     => $player->getStrikes()
-                    ];
                 }
             }
         }
 
         else {
-            return [
-                'message'     => 'You have already striked these coordinates! Try again.',
-                'coordinates' => $coordinates,
-                'strikes'     => $player->getStrikes()
-            ];
+            $message = 'You have already striked these coordinates! Try again.';
         }
+
+        return [
+            'message'     => $message,
+            'coordinates' => $coordinates,
+            'strikes'     => $player->getStrikes()
+        ];
     }
 
     public function getOwnShips($userToken)
@@ -458,12 +446,12 @@ class Room
             return $player1->getShips();
         }
 
-        else if ($player2->getPlayer()->getToken() == $userToken){
-            return $player2->getShips();
+        else if ($player2){
+            if ($player2->getPlayer()->getToken() == $userToken){
+                return $player2->getShips();
+            }
         }
 
-        else {
-            throw new HttpException(403, 'Sorry, but you can\'t see other players\' ships positions!');
-        }
+        throw new HttpException(403, 'Sorry, but you can\'t see other players\' ships positions!');
     }
 }

@@ -12,16 +12,4 @@ use Doctrine\ORM\EntityRepository;
  */
 class RoomRepository extends EntityRepository
 {
-    /**
-      * Get all active rooms
-      * @return Array of rooms
-     **/
-    public function getAllActive()
-    {
-        $qb = $this->createQueryBuilder('r');
-
-        $qb->select(array('r'))->where('r.done = 0');
-
-        return $qb->getQuery()->execute();
-    }
 }

@@ -24,10 +24,8 @@ use GameBundle\Entity\PlayerRoom;
 
 /*
     Todo:
-        - error exception > only show custom messages and code
-        - pretty print grille de jeu
         - tests unitaires
-        - doc & commentaires & README
+        - doc & commentaires & README & postman collection
 */
 
 class GameController extends FOSRestController
@@ -50,20 +48,46 @@ class GameController extends FOSRestController
     }
 
     /**
-     * @Get("/rooms/active")
+     * @Get("/rooms/waiting")
     **/
-    public function listActiveRoomsAction()
+    public function listWaitingRoomsAction()
     {
         $er = $this->getDoctrine()->getRepository('GameBundle:Room');
 
-        $rooms = $er->getAllActive();
+        $rooms = $er->findByStarted(false);
 
         $view = $this->view($rooms, 200);
         return $this->handleView($view);
     }
 
     /**
-     * @Post("/room")
+     * @Get("/rooms/active")
+    **/
+    public function listActiveRoomsAction()
+    {
+        $er = $this->getDoctrine()->getRepository('GameBundle:Room');
+
+        $rooms = $er->findByDone(false);
+
+        $view = $this->view($rooms, 200);
+        return $this->handleView($view);
+    }
+
+    /**
+     * @Get("/rooms/finished")
+    **/
+    public function listFinishedRoomsAction()
+    {
+        $er = $this->getDoctrine()->getRepository('GameBundle:Room');
+
+        $rooms = $er->findByDone(true);
+
+        $view = $this->view($rooms, 200);
+        return $this->handleView($view);
+    }
+
+    /**
+     * @Post("/rooms")
     **/
     public function createRoomAction(Request $request)
     {
@@ -86,7 +110,7 @@ class GameController extends FOSRestController
         $em->persist($room);
         $em->flush();
 
-        $view = $this->view($room, 200);
+        $view = $this->view($room, 201);
         return $this->handleView($view);
     }
 
@@ -131,7 +155,7 @@ class GameController extends FOSRestController
                         $em->persist($room);
                         $em->flush();
 
-                        $view = $this->view($room, 200);
+                        $view = $this->view($room, 201);
                     }
 
 
@@ -193,14 +217,23 @@ class GameController extends FOSRestController
                     if ($room->getTurn() == $userToken){
                         $em = $this->getDoctrine()->getManager();
 
+                        // Always check uppercased coordinates
                         $coordinates = strtoupper($paramFetcher->get('coordinates'));
+
+                        // Manage the strike and store the response that will be sent back
                         $strikeResponse = $room->strike($userToken, $coordinates);
 
-                        // Persist the room and strikes
+                        // Persist the room (and strikes, cascaded)
                         $em->persist($room);
+
+                        // Persist the players entity in case of them having won the game
+                        $em->persist($room->getPlayer1()->getPlayer());
+                        $em->persist($room->getPlayer2()->getPlayer());
+
+                        // Flush
                         $em->flush();
 
-                        $view = $this->view($strikeResponse, 200);
+                        $view = $this->view($strikeResponse, 201);
                         return $this->handleView($view);
                     }
 
@@ -242,8 +275,21 @@ class GameController extends FOSRestController
     }
 
     /**
+     * @Get("/players/wins")
+    **/
+    public function listPlayersByWinsAction()
+    {
+        $er = $this->getDoctrine()->getRepository('GameBundle:Player');
+
+        $players = $er->findAllOrderByWins();
+
+        $view = $this->view($players, 200);
+        return $this->handleView($view);
+    }
+
+    /**
      * @RequestParam(name="name", requirements=".+", allowBlank=false, description="Player name", nullable=false)
-     * @Post("/player")
+     * @Post("/players")
     */
     public function createPlayerAction(ParamFetcher $paramFetcher)
     {
@@ -268,7 +314,7 @@ class GameController extends FOSRestController
             'token'  => $player->getToken()
         ];
 
-        $view = $this->view($response, 200);
+        $view = $this->view($response, 201);
         return $this->handleView($view);
     }
 

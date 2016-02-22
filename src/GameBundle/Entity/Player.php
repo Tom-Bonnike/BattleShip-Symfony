@@ -11,7 +11,7 @@ use JMS\Serializer\Annotation\Expose;
  * Player
  *
  * @ORM\Table(name="player")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="GameBundle\Repository\PlayerRepository")
  *
  * @ExclusionPolicy("all")
  */
@@ -46,6 +46,15 @@ class Player
     private $token;
 
     /**
+     * @var integer
+     *
+     * @ORM\Column(name="wins", type="integer", nullable=false)
+     *
+     * @Expose
+     */
+    private $wins;
+
+    /**
      * @var \DateTime
      *
      * @ORM\Column(name="creation_date", type="datetime", nullable=false)
@@ -56,6 +65,7 @@ class Player
 
     public function __construct()
     {
+        $this->wins = 0;
         $this->creationDate = new \DateTime();
     }
 
@@ -116,6 +126,30 @@ class Player
     public function getToken()
     {
         return $this->token;
+    }
+
+    /**
+     * Set wins
+     *
+     * @param int $wins
+     *
+     * @return Player
+     */
+    public function setWins($wins)
+    {
+        $this->wins = $wins;
+
+        return $this;
+    }
+
+    /**
+     * Get Wins
+     *
+     * @return int
+     */
+    public function getWins()
+    {
+        return $this->wins;
     }
 
     /**

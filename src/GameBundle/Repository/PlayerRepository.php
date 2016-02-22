@@ -12,4 +12,17 @@ use Doctrine\ORM\EntityRepository;
  */
 class PlayerRepository extends EntityRepository
 {
+    /* Get players order by wins
+     *
+     * @return Array
+     */
+    public function findAllOrderByWins()
+    {
+        $qb = $this
+                ->createQueryBuilder('p')
+                ->select(array('p'))
+                ->orderBy('p.wins', 'DESC');
+
+        return $qb->getQuery()->execute();
+    }
 }
