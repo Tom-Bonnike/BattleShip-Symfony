@@ -83,6 +83,9 @@ fos_rest:
         include_format: true
     view:
         view_response_listener: 'force'
+        exception_wrapper_handler:  null
+    exception:
+        enabled: true
     param_fetcher_listener: 'force'
     body_listener: true
     allowed_methods_listener: true
