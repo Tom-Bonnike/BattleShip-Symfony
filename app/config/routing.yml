@@ -1,3 +1,7 @@
-game:
-  resource: GameBundle\Controller\GameController
+room:
+  resource: GameBundle\Controller\RoomController
   type:     rest
+
+player:
+    resource: GameBundle\Controller\PlayerController
+    type:     rest

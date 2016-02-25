@@ -41,6 +41,7 @@ class PlayerRoom
             'size' => 2
         ]
     ];
+
     /**
      * @var integer
      *
@@ -164,7 +165,7 @@ class PlayerRoom
 
     /**
      * @ORM\OneToOne(targetEntity="Player")
-     * @ORM\JoinColumn(name="player_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="player_id", referencedColumnName="id", nullable=true)
      *
      * @Expose
      */
