@@ -5,12 +5,16 @@
 - GOUTRY Martin
 - RAJATHURAI Chrissen
 
-##Instructions
+## Instructions
 - Cloner le repository
 - Composer install
-- Setup DB app/config/parameters.yml
 - Create DB `php bin/console doctrine:database:create`
-- Exécuter les requêtes de la collection POSTMAN
+- Create tables `php app/console doctrine:schema:update --force`
+- Exécuter les requêtes de la collection POSTMAN (collection située à la racine du repo)
 
-##Tests unitaires
-`phpunit -c app/` *or* `bin/phpunit -c /app`
+## Tests unitaires
+`phpunit -c app/` *or* `php bin/phpunit -c app/`
+Les tests passent à 100%.
+
+## Documentation
+La génération de la documentation ne semble pas fonctionner (à cause d'un problème de dépendances?) mais tous les DocBlocks sont présents.
