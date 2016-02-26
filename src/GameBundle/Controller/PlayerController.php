@@ -16,6 +16,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 use GameBundle\Entity\Player;
 use GameBundle\Repository\PlayerRepository;
 
+use GameBundle\Entity\PlayerRoom;
+use GameBundle\Repository\PlayerRoomRepository;
+
 /**
  * Class for Player related API actions
 */
@@ -147,8 +150,13 @@ class PlayerController extends FOSRestController
 
         if ($player) {
             if ($player == $playerByToken) {
+                $er = $this->getDoctrine()->getRepository('GameBundle:PlayerRoom');
                 $em = $this->getDoctrine()->getManager();
+
+                $playerRoom = $er->findOneByPlayerId($player->getId());
+                $playerRoom->setPlayerId(null);
                 $em->remove($player);
+                $em->persist($playerRoom);
                 $em->flush();
 
                 $view = $this->view([], 204);
@@ -161,12 +169,22 @@ class PlayerController extends FOSRestController
             $player = $er->findOneByName($id);
 
             if ($player) {
-                $em = $this->getDoctrine()->getManager();
-                $em->remove($player);
-                $em->flush();
+                if ($player == $playerByToken){
+                    $er = $this->getDoctrine()->getRepository('GameBundle:PlayerRoom');
+                    $em = $this->getDoctrine()->getManager();
 
-                $view = $this->view([], 204);
-                return $this->handleView($view);
+                    $playerRoom = $er->findOneByPlayerId($player->getId());
+                    $playerRoom->setPlayerId(null);
+                    $em->remove($player);
+                    $em->persist($playerRoom);
+                    $em->flush();
+
+                    $view = $this->view([], 204);
+                    return $this->handleView($view);
+                } else {
+                    throw new HttpException(403, 'Sorry, but you can\'t delete another player\'s account.');
+                }
+
             } else {
                 throw new HttpException(404, 'Sorry, but this user doesn\'t exist.');
             }

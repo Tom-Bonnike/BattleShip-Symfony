@@ -57,7 +57,7 @@ class PlayerRoom
     /**
      * @var integer
      *
-     * @ORM\Column(name="player_id", type="integer", nullable=false)
+     * @ORM\Column(name="player_id", type="integer", nullable=true)
     */
     private $playerId;
 
