@@ -154,9 +154,13 @@ class PlayerController extends FOSRestController
                 $em = $this->getDoctrine()->getManager();
 
                 $playerRoom = $er->findOneByPlayerId($player->getId());
-                $playerRoom->setPlayerId(null);
+
+                if ($playerRoom){
+                    $playerRoom->setPlayerId(null);
+                    $em->persist($playerRoom);
+                }
+
                 $em->remove($player);
-                $em->persist($playerRoom);
                 $em->flush();
 
                 $view = $this->view([], 204);
@@ -174,9 +178,13 @@ class PlayerController extends FOSRestController
                     $em = $this->getDoctrine()->getManager();
 
                     $playerRoom = $er->findOneByPlayerId($player->getId());
-                    $playerRoom->setPlayerId(null);
+
+                    if ($playerRoom){
+                        $playerRoom->setPlayerId(null);
+                        $em->persist($playerRoom);
+                    }
+
                     $em->remove($player);
-                    $em->persist($playerRoom);
                     $em->flush();
 
                     $view = $this->view([], 204);

@@ -8,6 +8,7 @@ use JMS\Serializer\Annotation\ExclusionPolicy;
 use JMS\Serializer\Annotation\Expose;
 
 use GameBundle\Entity\Player;
+use GameBundle\Repository\PlayerRoomRepository;
 
 /**
  * PlayerRoom
