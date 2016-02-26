@@ -20,15 +20,22 @@ use GameBundle\Entity\PlayerRoom;
 
 /*
     Todo:
-        - doc & commentaires & README & postman collection
+        - Postman collection & README
         - préparer bdd?
 */
 
+/**
+ * Class for Room related API actions
+*/
 class RoomController extends FOSRestController
 {
     /**
+     * Gets all rooms
+     *
+     * @return View
+     *
      * @Get("/rooms")
-    **/
+    */
     public function listRoomsAction()
     {
         $er = $this->getDoctrine()->getRepository('GameBundle:Room');
@@ -40,8 +47,12 @@ class RoomController extends FOSRestController
     }
 
     /**
+     * Gets all rooms that haven't started yet
+     *
+     * @return View
+     *
      * @Get("/rooms/waiting")
-    **/
+    */
     public function listWaitingRoomsAction()
     {
         $er = $this->getDoctrine()->getRepository('GameBundle:Room');
@@ -53,8 +64,12 @@ class RoomController extends FOSRestController
     }
 
     /**
+     * Gets all rooms in which games are NOT done
+     *
+     * @return View
+     *
      * @Get("/rooms/active")
-    **/
+    */
     public function listActiveRoomsAction()
     {
         $er = $this->getDoctrine()->getRepository('GameBundle:Room');
@@ -66,8 +81,12 @@ class RoomController extends FOSRestController
     }
 
     /**
+     * Gets all rooms in which games are finished
+     *
+     * @return View
+     *
      * @Get("/rooms/finished")
-    **/
+    */
     public function listFinishedRoomsAction()
     {
         $er = $this->getDoctrine()->getRepository('GameBundle:Room');
@@ -79,8 +98,14 @@ class RoomController extends FOSRestController
     }
 
     /**
+     * Creates a room
+     *
+     * @param Request $request The request object, in which must be set a "X-USER-TOKEN" header's value with the user's token set for authentification
+     *
+     * @return View
+     *
      * @Post("/rooms")
-    **/
+    */
     public function createRoomAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
@@ -111,26 +136,37 @@ class RoomController extends FOSRestController
     }
 
     /**
+     * Gets one room by id
+     *
+     * @param Room $room The room object fetched by ID
+     *
+     * @return View
+     *
      * @Get("/room/{id}")
-    **/
+    */
     public function showRoomAction(Room $room = null)
     {
-        if ($room){
+        if ($room) {
             $view = $this->view($room, 200);
             return $this->handleView($view);
-        }
-
-        else {
+        } else {
             throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
         }
     }
 
     /**
+     * Join a room
+     *
+     * @param Request $request The request object, in which must be set a "X-USER-TOKEN" header's value with the user's token set for authentification
+     * @param Room $room The room object fetched by ID
+     *
+     * @return View
+     *
      * @Put("/room/{id}/join")
-    **/
+    */
     public function joinRoomAction(Request $request, Room $room = null)
     {
-        if ($room){
+        if ($room) {
             $em = $this->getDoctrine()->getManager();
 
             $userToken = $request->headers->get('X-USER-TOKEN');
@@ -152,38 +188,35 @@ class RoomController extends FOSRestController
                         $em->flush();
 
                         $view = $this->view($room, 201);
-                    }
-
-
-                    else {
+                    } else {
                         throw new HttpException(403, 'Sorry, but you\'ve already joined this room!');
                     }
-
-                }
-
-                else {
+                } else {
                     throw new HttpException(403, 'Sorry, but the room is full!');
                 }
-            }
-
-            else {
+            } else {
                 throw new HttpException(403, 'Sorry, but the game has already started!');
             }
 
             return $this->handleView($view);
-        }
-
-        else {
+        } else {
             throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
         }
     }
 
     /**
+     * Gets your own ships if the given user-token allows it
+     *
+     * @param Request $request The request object, in which must be set a "X-USER-TOKEN" header's value with the user's token set for authentification
+     * @param Room $room The room object fetched by ID
+     *
+     * @return View
+     *
      * @Get("/room/{id}/ships")
-    **/
+    */
     public function getOwnShipsAction(Request $request, Room $room = null)
     {
-        if ($room){
+        if ($room) {
             $userToken = $request->headers->get('X-USER-TOKEN');
             $player    = $this->get('usertoken')->validate($userToken);
 
@@ -191,30 +224,36 @@ class RoomController extends FOSRestController
 
             $view = $this->view($ships, 200);
             return $this->handleView($view);
-        }
-
-        else {
+        } else {
             throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
         }
     }
 
     /**
+     * Strikes the enemy if it's your turn
+     *
+     * @param ParamFetcher $paramFetcher The FOSREST Param fetcher, that will be used to fetch the coordinates for the strike
+     * @param Request $request The request object, in which must be set a "X-USER-TOKEN" header's value with the user's token set for authentification along with a "coordinates" data in the request body, in the format "A1" to "J10"
+     * @param Room $room The room object fetched by ID
+     *
+     * @return View
+     *
      * @RequestParam(name="coordinates", requirements=@Assert\Regex("/^([a-jA-J]([1-9]|10))$/"), allowBlank=false, description="Strike coordinates", nullable=false)
      * @Put("/room/{id}/strike")
-    **/
+    */
     public function roomStrikeAction(ParamFetcher $paramFetcher, Request $request, Room $room = null)
     {
-        if ($room){
+        if ($room) {
             $userToken = $request->headers->get('X-USER-TOKEN');
             $player    = $this->get('usertoken')->validate($userToken);
 
-            if (!$room->getDone()){
-                if ($room->getStarted()){
-                    if ($room->getTurn() == $userToken){
+            if (!$room->getDone()) {
+                if ($room->getStarted()) {
+                    if ($room->getTurn() == $userToken) {
                         $em = $this->getDoctrine()->getManager();
 
                         // Always check uppercased coordinates
-                        $coordinates = strtoupper($paramFetcher->get('coordinates'));
+                        $coordinates = (string) strtoupper($paramFetcher->get('coordinates'));
 
                         // Manage the strike and store the response that will be sent back
                         $strikeResponse = $room->strike($userToken, $coordinates);
@@ -231,24 +270,16 @@ class RoomController extends FOSRestController
 
                         $view = $this->view($strikeResponse, 201);
                         return $this->handleView($view);
-                    }
-
-                    else {
+                    } else {
                         throw new HttpException(403, 'Sorry, but it\'s not your turn!');
                     }
-                }
-
-                else {
+                } else {
                     throw new HttpException(403, 'Sorry, but the game hasn\'t started yet!');
                 }
-            }
-
-            else {
+            } else {
                 throw new HttpException(403, 'Sorry, but the game has already ended.');
             }
-        }
-
-        else {
+        } else {
             throw new HttpException(404, 'Sorry, but this room doesn\'t exist.');
         }
     }

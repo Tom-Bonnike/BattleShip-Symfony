@@ -7,8 +7,6 @@ use GameBundle\Repository\RoomRepository;
 
 class RoomControllerTest extends WebTestCase
 {
-    private $repo;
-
     protected function setUp()
     {
         self::bootKernel();
@@ -20,11 +18,28 @@ class RoomControllerTest extends WebTestCase
         $this->router = static::$kernel->getContainer()->get('router');
     }
 
-    protected function assertJsonResponse($response, $statusCode = 200) {
+    /**
+     * Custom assert to test if a JSON Response has the right headers and if the expected status code is received
+     *
+     * @param string $response   The response that was received, as a string
+     * @param int    $statusCode The status code expected in the response
+     *
+     *
+     * @return void
+    */
+    protected function assertJsonResponse($response, $statusCode = 200)
+    {
         $this->assertEquals($statusCode, $response->getStatusCode(), $response->getContent());
         $this->assertTrue($response->headers->contains('Content-Type', 'application/json'), $response->headers);
     }
 
+    /**
+     * Tests the testListRoomsAction, testing if the JSON Response is correct, if all the rooms are sent back and if the XML type can be properly requested
+     *
+     * @test
+     *
+     * @return void
+    */
     public function testListRoomsAction()
     {
         // Test JSON type

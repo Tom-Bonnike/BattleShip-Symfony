@@ -12,8 +12,16 @@ class UserTokenTest extends WebTestCase
         $this->userToken = static::$kernel->getContainer()->get('usertoken');
     }
 
-    public function testValidate(){
+    /**
+     * Tests the testValidate service method, testing if an HttpException with status code 404 is received if no userToken is sent to the method
+     *
+     * @test
+     *
+     * @return void
+    */
+    public function testValidate()
+    {
         $this->setExpectedException('Symfony\Component\HttpKernel\Exception\HttpException');
-        $this->userToken->validate(null);
+        $this->userToken->validate('');
     }
 }

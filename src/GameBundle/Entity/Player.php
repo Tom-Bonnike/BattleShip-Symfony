@@ -16,7 +16,7 @@ use GameBundle\Repository\PlayerRepository;
  * @ORM\Entity(repositoryClass="GameBundle\Repository\PlayerRepository")
  *
  * @ExclusionPolicy("all")
- */
+*/
 class Player
 {
     /**
@@ -27,7 +27,7 @@ class Player
      * @ORM\GeneratedValue(strategy="IDENTITY")
      *
      * @Expose
-     */
+    */
     private $id;
 
     /**
@@ -36,7 +36,7 @@ class Player
      * @ORM\Column(name="name", type="string", length=255, nullable=false)
      *
      * @Expose
-     */
+    */
     private $name;
 
     /**
@@ -44,7 +44,7 @@ class Player
      *
      * @ORM\Column(name="token", type="string", length=255, nullable=false)
      *
-     */
+    */
     private $token;
 
     /**
@@ -53,7 +53,7 @@ class Player
      * @ORM\Column(name="wins", type="integer", nullable=false)
      *
      * @Expose
-     */
+    */
     private $wins;
 
     /**
@@ -62,9 +62,14 @@ class Player
      * @ORM\Column(name="creation_date", type="datetime", nullable=false)
      *
      * @Expose
-     */
+    */
     private $creationDate;
 
+    /**
+     * The Player entity constructor, in which is set wins to 0 by default and in which is initialized the creation date attribute to the moment the function is called.
+     *
+     * @return void
+    */
     public function __construct()
     {
         $this->wins = 0;
@@ -73,22 +78,22 @@ class Player
 
 
     /**
-     * Get id
+     * Getter id
      *
      * @return integer
-     */
+    */
     public function getId()
     {
         return $this->id;
     }
 
     /**
-     * Set name
+     * Setter name
      *
      * @param string $name
      *
      * @return Player
-     */
+    */
     public function setName($name)
     {
         $this->name = $name;
@@ -97,23 +102,23 @@ class Player
     }
 
     /**
-     * Get name
+     * Getter name
      *
      * @return string
-     */
+    */
     public function getName()
     {
         return $this->name;
     }
 
     /**
-     * Set token
+     * Setter token
      *
      * @param string $token
      *
      * @return Player
-     */
-    public function setToken($token)
+    */
+    public function setToken(string $token)
     {
         $this->token = $token;
 
@@ -121,23 +126,23 @@ class Player
     }
 
     /**
-     * Get token
+     * Getter token
      *
      * @return string
-     */
+    */
     public function getToken()
     {
         return $this->token;
     }
 
     /**
-     * Set wins
+     * Setter wins
      *
      * @param int $wins
      *
      * @return Player
-     */
-    public function setWins($wins)
+    */
+    public function setWins(int $wins)
     {
         $this->wins = $wins;
 
@@ -145,23 +150,23 @@ class Player
     }
 
     /**
-     * Get Wins
+     * Getter Wins
      *
      * @return int
-     */
+    */
     public function getWins()
     {
         return $this->wins;
     }
 
     /**
-     * Set creationDate
+     * Setter creationDate
      *
      * @param \DateTime $creationDate
      *
      * @return Player
-     */
-    public function setCreationDate($creationDate)
+    */
+    public function setCreationDate(\DateTime $creationDate)
     {
         $this->creationDate = $creationDate;
 
@@ -169,10 +174,10 @@ class Player
     }
 
     /**
-     * Get creationDate
+     * Getter creationDate
      *
      * @return \DateTime
-     */
+    */
     public function getCreationDate()
     {
         return $this->creationDate;
