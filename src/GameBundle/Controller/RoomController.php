@@ -18,12 +18,6 @@ use GameBundle\Repository\RoomRepository;
 
 use GameBundle\Entity\PlayerRoom;
 
-/*
-    Todo:
-        - Postman collection & README
-        - préparer bdd?
-*/
-
 /**
  * Class for Room related API actions
 */
